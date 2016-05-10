@@ -93,9 +93,6 @@
     <Image Include="resources\fill_1.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\fill_2.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="resources\new.ico">
       <Filter>Resource Files</Filter>
     </Image>

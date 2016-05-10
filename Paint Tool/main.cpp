@@ -5,7 +5,8 @@
 #include <commctrl.h>
 
 // Paint Tool library
-//#include "h\canvas.h"
+#include "h\canvas.h"
+#include "h\line.h"
 #include "resource.h"
 
 // Constants
@@ -16,8 +17,8 @@ const int HEIGHT = 600;
 #define WINDOW_CLASS_NAME L"WINCLASS1"
 
 HWND g_hwnd;
-//CCanvas* g_canvas;
-HIMAGELIST g_hImageList;
+HINSTANCE g_hInstance;
+CCanvas* g_canvas;
 
 void GameLoop() {
 	//One frame of game logic occurs here...
@@ -30,6 +31,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 {
 
 	// This is the main message handler of the system.
+	//HINSTANCE _hInstance;
 	PAINTSTRUCT ps; // Used in WM_PAINT.
 	HDC hdc; // Handle to a device context.
 
@@ -38,11 +40,53 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 
 	case WM_CREATE:
 	{
-		// Do initialization stuff here..
-
-		// Initializing global classes
 		g_hwnd = _hwnd;
 		//g_canvas = new CCanvas();
+
+		//// ICONS ////
+		// ----------------------------- New
+		HWND button_new = CreateWindow(
+			L"BUTTON", L"",
+			WS_CHILD | WS_VISIBLE | BS_ICON,
+			0, 0, 44, 44, 
+			_hwnd,
+			(HMENU)IDM_FILE_NEW, GetModuleHandle(NULL), NULL
+		);
+		HICON icon_new = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_NEW));
+		SendMessage(button_new, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon_new);
+
+		// ----------------------------- Open
+		HWND button_open = CreateWindow(
+			L"BUTTON", L"",
+			WS_CHILD | WS_VISIBLE | BS_ICON,
+			44, 0, 44, 44,
+			_hwnd,
+			(HMENU)IDM_FILE_OPEN, GetModuleHandle(NULL), NULL
+		);
+		HICON icon_open = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_OPEN));
+		SendMessage(button_open, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon_open);
+
+		// ----------------------------- Save
+		HWND button_save = CreateWindow(
+			L"BUTTON", L"",
+			WS_CHILD | WS_VISIBLE | BS_ICON,
+			88, 0, 44, 44,
+			_hwnd,
+			(HMENU)IDM_FILE_SAVE, GetModuleHandle(NULL), NULL
+		);
+		HICON icon_save = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_SAVE));
+		SendMessage(button_save, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon_save);
+
+		// ----------------------------- Brush
+		HWND button_brush = CreateWindow(
+			L"BUTTON", L"",
+			WS_CHILD | WS_VISIBLE | BS_ICON,
+			176, 0, 44, 44,
+			_hwnd,
+			(HMENU)IDI_ICON_BRUSH, GetModuleHandle(NULL), NULL
+		);
+		HICON icon_brush = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_BRUSH));
+		SendMessage(button_brush, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)icon_brush);
 
 		// Return Success.
 		return (0);
@@ -50,15 +94,20 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 	break;
 	case WM_PAINT:
 	{
-		// Simply validate the window.
-		hdc = BeginPaint(_hwnd, &ps);
-		// You would do all your painting here...
 
-		/*if (g_canvas != nullptr)
-		g_canvas->Draw(hdc);*/
+		hdc = BeginPaint(_hwnd, &ps);
+
+		/*hdcMem = CreateCompatibleDC(hdc);
+		oldBitmap = SelectObject(hdcMem, hBitmap);
+
+		GetObject(hBitmap, sizeof(BITMAP), &bitmap);
+		BitBlt(hdc, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hdcMem, 0, 0, SRCCOPY);
+
+		SelectObject(hdcMem, oldBitmap);
+		DeleteDC(hdcMem);*/
 
 		EndPaint(_hwnd, &ps);
-		// Return Success.
+
 		return (0);
 	}
 	break;
@@ -72,8 +121,9 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 
 		switch (LOWORD(_wparam)) {
 
+		// File Menu
 		case IDM_FILE_NEW:
-
+			MessageBox(_hwnd, L"Create a new project?", L"New", MB_OKCANCEL);
 			break;
 		case IDM_FILE_OPEN:
 
@@ -87,7 +137,25 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDM_FILE_EXIT:
 			PostQuitMessage(0);
 			break;
+		// Help menu
+		case IDM_HELP_ABOUT:
+			MessageBox(_hwnd, L"Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", L"About", MB_OK);
+			break;
+		// Drawing buttons
+		case IDI_ICON_BRUSH:
+			
+			//MessageBox(_hwnd, L"BRUSH SELECTED", L"BRUSH", MB_OK);
+			//g_canvas->AddShape();
 
+			switch (LOWORD(_wparam)) {
+
+			case WM_RBUTTONDBLCLK:
+
+				break;
+
+			}
+
+			break;
 		default: break;
 
 		}
@@ -158,27 +226,16 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 
 	//// First fill in the window class structure ////
 	winClass.cbSize = sizeof(WNDCLASSEX);
-
 	winClass.style = CS_DBLCLKS | CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-
 	winClass.lpfnWndProc = WindowProc;
-
 	winClass.cbClsExtra = 0;
-
 	winClass.cbWndExtra = 0;
-
 	winClass.hInstance = _hInstance;
-
 	winClass.hIcon = LoadIcon(_hInstance, MAKEINTRESOURCE(IDI_ICON_APP));
-
 	winClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-
 	winClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
-
 	winClass.lpszMenuName = MAKEINTRESOURCE(IDR_MENU);
-
 	winClass.lpszClassName = WINDOW_CLASS_NAME;
-
 	winClass.hIconSm = LoadIcon(_hInstance, MAKEINTRESOURCE(IDI_ICON_APP));
 
 	//// Register the window class ////
@@ -189,7 +246,7 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 	HMENU _hMenu = LoadMenu(_hInstance, MAKEINTRESOURCE(IDR_MENU));
 
 	//// Centering the window ////
-	
+
 	// Get the screen's resolution
 	int screenX = GetSystemMetrics(SM_CXSCREEN);
 	int screenY = GetSystemMetrics(SM_CYSCREEN);
@@ -211,8 +268,14 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 		NULL);								// Extra creation parameters.
 
 	if (!(hwnd)) {
+		g_hInstance = _hInstance;
 		return (0);
+		
 	}
+
+	// TOOLBAR //
+
+
 
 	//// Enter main event loop ////
 	while (true) {

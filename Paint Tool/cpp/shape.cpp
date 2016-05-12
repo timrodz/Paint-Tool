@@ -7,25 +7,25 @@ IShape::~IShape() {}
 
 void IShape::SetStartX(int _iStartX) {
 
-
+	m_iStartX = _iStartX;
 
 }
 
 void IShape::SetEndX(int _iEndX) {
 
-
-
-}
-
-void IShape::SetStartY(int _iStartX) {
-
-
+	m_iEndX = _iEndX;
 
 }
 
-void IShape::SetEndY(int _iStartX) {
+void IShape::SetStartY(int _iStartY) {
 
+	m_iStartY = _iStartY;
 
+}
+
+void IShape::SetEndY(int _iEndY) {
+
+	m_iEndY = _iEndY;
 
 }
 

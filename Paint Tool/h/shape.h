@@ -8,7 +8,6 @@
 class IShape {
 
 public:
-	// not even needed
 	IShape();
 	virtual ~IShape();
 
@@ -16,8 +15,8 @@ public:
 
 	void SetStartX(int _iStartX);
 	void SetEndX(int _iEndX);
-	void SetStartY(int _iStartX);
-	void SetEndY(int _iStartX);
+	void SetStartY(int _iStartY);
+	void SetEndY(int _iEndY);
 	//void SetColor(COLORREF _newColor);
 
 protected:

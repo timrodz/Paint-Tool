@@ -42,6 +42,7 @@
     <Image Include="resources\colorPicker_1.ico" />
     <Image Include="resources\fill_1.ico" />
     <Image Include="resources\icon.ico" />
+    <Image Include="resources\pen_color.ico" />
     <Image Include="resources\polygon.ico" />
     <Image Include="resources\property.ico" />
     <Image Include="resources\square.ico" />
@@ -105,6 +106,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
+      <AdditionalOptions>comctl32.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

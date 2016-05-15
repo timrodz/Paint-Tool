@@ -1,10 +1,9 @@
-//#define WIN32_LEAN_AND_MEAN
-
 #include <windows.h> // Include all the windows headers.
 #include <windowsx.h> // Include useful macros.
 #include <commctrl.h>
 #include <strstream>
 #include <string>
+#include <iostream>
 
 // Paint Tool library
 #include "h\canvas.h"
@@ -16,11 +15,6 @@
 #include "util.h"
 #include "resource.h"
 
-// Macros
-#define ID_BLUE 1
-#define ID_YELLOW 2
-#define ID_ORANGE 3
-
 // Constants
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -28,7 +22,6 @@ const int HEIGHT = 600;
 // The two main windows
 #define WINDOW_CLASS_NAME     L"WINCLASS1" // Toolbar, menu
 #define WINDOW_CLASS_PANEL    L"WINCLASS2" // Drawing canvas
-#define WINDOW_CLASS_PROPERTY L"WINCLASS3" // Pop up brush property menu
 
 HWND g_hwnd;
 HINSTANCE g_hInstance;
@@ -36,20 +29,20 @@ CCanvas* g_canvas;
 IShape* currentShape;
 EShape g_shape;
 
-// Drawing properties
-
-
 // Buttons //
-static HWND button_new;
-static HWND button_open;
-static HWND button_save;
-static HWND button_color;
-static HWND button_properties;
+HWND button_new;
+HWND button_open;
+HWND button_save;
+HWND button_properties;
+HWND button_fillColor;
+HWND button_penColor;
 
 // Brushes //
-static HWND brush_line;
-static HWND brush_rect;
-static HWND brush_ellipse;
+HWND brush_line;
+HWND brush_rect;
+HWND brush_ellipse;
+HWND hTrack;
+HWND hlbl;
 
 // Brush properties
 bool g_bClearCanvas;
@@ -60,15 +53,28 @@ int g_hatchStyle;
 int g_penStyle;
 int g_width;
 
+// Brush styles
+#define ID_SOLID 1
+#define ID_HATCH 2
+
+// Hatch styles
+#define ID_BDIAGONAL 3
+#define ID_CROSS 4
+#define ID_DIAGCROSS 5
+#define ID_FDIAGONAL 6
+#define ID_HORIZONTAL 7
+#define ID_VERTICAL 8
+
+//#define ID_BDIAGONAL 9
+
 // Function declarations //
 void RegisterPanel();
-void RegisterPropertyMenu();
 LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _msg, WPARAM _wparam, LPARAM _lparam);
 LRESULT CALLBACK PanelProc(HWND _hwnd, UINT _msg, WPARAM _wparam, LPARAM _lparam);
-LRESULT CALLBACK PropertyProc(HWND _hwnd, UINT _msg, WPARAM _wparam, LPARAM _lparam);
 COLORREF ShowColorDialog(HWND hwnd);
 void CreateMenubar(HWND);
 void OpenDialog(HWND);
+void UpdateLabel();
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -181,16 +187,6 @@ void RegisterPanel() {
 
 }
 
-void RegisterPropertyMenu() {
-
-	WNDCLASSW rwc = { 0 };
-	rwc.lpszClassName = WINDOW_CLASS_PROPERTY;
-	rwc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	rwc.lpfnWndProc = PropertyProc;
-	RegisterClassW(&rwc);
-
-}
-
 LRESULT CALLBACK WindowProc(HWND _hwnd,
 	UINT _msg,
 	WPARAM _wparam,
@@ -198,7 +194,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 {
 
 	static HWND hwndPanel;
-	static HWND hwndProperty;
 
 	switch (_msg) {
 
@@ -242,26 +237,26 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		SendMessage(button_save, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 		// ----------------------------- Color picker
-		button_color = CreateWindow(
+		button_fillColor = CreateWindow(
 			L"BUTTON", L"",
 			WS_CHILD | WS_VISIBLE | BS_ICON,
-			132, 0, 44, 44,
+			396, 0, 44, 44,
 			_hwnd,
 			(HMENU)IDI_ICON_COLOR, GetModuleHandle(NULL), NULL
 		);
 		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_COLOR));
-		SendMessage(button_color, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
+		SendMessage(button_fillColor, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
-		// ----------------------------- Brush Properties
-		button_properties = CreateWindow(
+		// ----------------------------- Color picker
+		button_penColor = CreateWindow(
 			L"BUTTON", L"",
 			WS_CHILD | WS_VISIBLE | BS_ICON,
-			352, 0, 44, 44,
+			440, 0, 44, 44,
 			_hwnd,
-			(HMENU)IDI_ICON_PROPERTY, GetModuleHandle(NULL), NULL
+			(HMENU)IDI_ICON_PENCOLOR, GetModuleHandle(NULL), NULL
 		);
-		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_PROPERTY));
-		SendMessage(button_properties, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
+		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_PENCOLOR));
+		SendMessage(button_penColor, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 		//// BRUSHES ////
 		// ----------------------------- Line
@@ -297,8 +292,34 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_ELLIPSE));
 		SendMessage(brush_ellipse, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
-		//// Registering the canvas and creating the drawing panel ////
+		//// Width trackbar ////
+		HWND hLeftLabel = CreateWindowW(L"Static", L"0",
+			WS_CHILD | WS_VISIBLE, 0, 0, 10, 15, _hwnd, (HMENU)1, NULL, NULL);
 
+		HWND hRightLabel = CreateWindowW(L"Static", L"10",
+			WS_CHILD | WS_VISIBLE, 0, 0, 30, 15, _hwnd, (HMENU)2, NULL, NULL);
+
+		hlbl = CreateWindowW(L"Static", L"Width: 1", WS_CHILD | WS_VISIBLE,
+			500, 13, 65, 30, _hwnd, (HMENU)3, NULL, NULL);
+
+		INITCOMMONCONTROLSEX icex;
+
+		icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+		icex.dwICC = ICC_LISTVIEW_CLASSES;
+		InitCommonControlsEx(&icex);
+
+		hTrack = CreateWindowW(TRACKBAR_CLASSW, L"Trackbar Control",
+			WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+			590, 7, 70, 30, _hwnd, (HMENU)3, NULL, NULL);
+
+		SendMessageW(hTrack, TBM_SETRANGE, TRUE, MAKELONG(1, 10));
+		SendMessageW(hTrack, TBM_SETPAGESIZE, 0, 10);
+		SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
+		SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
+		SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
+		SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
+
+		//// Registering the canvas and creating the drawing panel ////
 		g_canvas = new CCanvas();
 
 		RegisterPanel();
@@ -311,13 +332,13 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			_hwnd, (HMENU)1, NULL, NULL);
 
 		// Register the hotkeys
-		RegisterHotKey(_hwnd, 1, MOD_CONTROL | MOD_NOREPEAT, 'N'); // CTRL + N
-		RegisterHotKey(_hwnd, 2, MOD_CONTROL | MOD_NOREPEAT, 'O'); // CTRL + N
-		RegisterHotKey(_hwnd, 3, MOD_CONTROL | MOD_NOREPEAT, 'S'); // CTRL + S
-		RegisterHotKey(_hwnd, 4, MOD_SHIFT | MOD_CONTROL | MOD_NOREPEAT, 'N'); // SHIFT + CTRL + S
-		RegisterHotKey(_hwnd, 5, MOD_CONTROL | MOD_NOREPEAT, 'Q'); // CTRL + Q
-		RegisterHotKey(_hwnd, 6, MOD_CONTROL | MOD_NOREPEAT, 'Z'); // CTRL + Z
-		RegisterHotKey(_hwnd, 7, MOD_CONTROL | MOD_NOREPEAT, 'Y'); // CTRL + Y
+		//RegisterHotKey(_hwnd, 1, MOD_CONTROL | MOD_NOREPEAT, 'N'); // CTRL + N
+		//RegisterHotKey(_hwnd, 2, MOD_CONTROL | MOD_NOREPEAT, 'O'); // CTRL + N
+		//RegisterHotKey(_hwnd, 3, MOD_CONTROL | MOD_NOREPEAT, 'S'); // CTRL + S
+		//RegisterHotKey(_hwnd, 4, MOD_SHIFT | MOD_CONTROL | MOD_NOREPEAT, 'N'); // SHIFT + CTRL + S
+		//RegisterHotKey(_hwnd, 5, MOD_CONTROL | MOD_NOREPEAT, 'Q'); // CTRL + Q
+		//RegisterHotKey(_hwnd, 6, MOD_CONTROL | MOD_NOREPEAT, 'Z'); // CTRL + Z
+		//RegisterHotKey(_hwnd, 7, MOD_CONTROL | MOD_NOREPEAT, 'Y'); // CTRL + Y
 
 		g_canvas->Initialize(hwndPanel, WIDTH, HEIGHT);
 
@@ -351,11 +372,24 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDM_HELP_ABOUT:
 			MessageBox(_hwnd, L"Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", L"About", MB_OK);
 			break;
+		case IDM_BRUSH_LINE:
+			g_shape = LINE;
+			break;
+		case IDM_BRUSH_RECTANGLE:
+			g_shape = BOX;
+			break;
+		case IDM_BRUSH_ELLIPSE:
+			g_shape = ELLIPSE;
+			break;
+			// Menu with icons
+
 		case IDI_ICON_COLOR:
 			g_fillColor = ShowColorDialog(_hwnd);
 			break;
-			// Drawing buttons
-			// Line
+		case IDI_ICON_PENCOLOR:
+			g_penColor = ShowColorDialog(_hwnd);
+			break;
+		// Line
 		case IDI_ICON_BRUSH:
 			g_shape = LINE;
 			break;
@@ -367,18 +401,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDI_ICON_ELLIPSE:
 			g_shape = ELLIPSE;
 			break;
-		case IDI_ICON_PROPERTY:
-		{
-			// Position it according to where the window is at
-			RegisterPropertyMenu();
 
-			// Drawing panel
-			hwndProperty = CreateWindowEx(WS_EX_TOOLWINDOW, WINDOW_CLASS_PROPERTY, L"Properties",
-				WS_POPUPWINDOW | WS_CAPTION | WS_VISIBLE | WS_CHILD,
-				200, 120, 400, 320,
-				_hwnd, NULL, g_hInstance, NULL);
-
-		}
 		default: break;
 
 		}
@@ -388,8 +411,13 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 	}
 	break;
 
+	case WM_HSCROLL:
+	{
+		UpdateLabel();
+	}
+	break;
 	// Key combo listener
-	case WM_HOTKEY:
+	/*case WM_HOTKEY:
 	{
 	case 'N':
 		MessageBoxA(_hwnd, "CTRL + N", "IMPORTANT", MB_OK);
@@ -417,7 +445,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		return (0);
 
 	}
-	break;
+	break;*/
 
 	case WM_DESTROY:
 	{
@@ -480,14 +508,12 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 	case WM_LBUTTONDOWN:
 	{
 
-
-
 		int brushType;
 
 		switch (g_shape) {
 
 		case LINE:
-			currentShape = new CLine(g_penStyle, g_width, g_fillColor);
+			currentShape = new CLine(g_penStyle, g_width, g_penColor);
 			brushType = Button_GetState(brush_line);
 			break;
 		case BOX:
@@ -506,6 +532,8 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 		if (brushType != 0) {
 
 			g_canvas->AddShape(currentShape);
+
+			std::cout << "Creating a shape" << std::endl;
 
 			currentShape->SetStartX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetStartY(static_cast<int>(HIWORD(_lparam)));
@@ -562,105 +590,6 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 
 }
 
-//////////////////////////////////////////////////////////
-//					PROPERTY PROCESS					//
-//////////////////////////////////////////////////////////
-
-LRESULT CALLBACK PropertyProc(HWND _hwnd,
-	UINT _msg,
-	WPARAM _wparam,
-	LPARAM _lparam)
-{
-
-	static HWND hwndCombo, hwndStatic;
-	const wchar_t *items[] = {
-		L"Line",		// 0 
-		L"Rectangle",	// 1
-		L"Ellipse",		// 2
-		L"Polygon"		// 3
-	};
-
-	switch (_msg) {
-
-	case WM_CREATE:
-	{
-
-		hwndCombo = CreateWindowW(L"Combobox", NULL,
-			WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
-			10, 10, 120, 110, _hwnd, NULL, g_hInstance, NULL);
-
-		hwndStatic = CreateWindowW(L"Static", L"",
-			WS_CHILD | WS_VISIBLE,
-			10, 50, 120, 25, _hwnd, NULL, g_hInstance, NULL);
-
-		for (int i = 0; i < 4; i++) {
-
-			SendMessageW(hwndCombo, CB_ADDSTRING, 0, (LPARAM)items[i]);
-
-		}
-
-
-		return (0);
-
-	}
-	break;
-
-	case WM_COMMAND:
-	{
-
-		if (HIWORD(_wparam) == BN_CLICKED) {
-
-			SendMessage(hwndCombo, CB_SHOWDROPDOWN, (WPARAM)TRUE, 0);
-		}
-
-		if (HIWORD(_wparam) == CBN_SELCHANGE) {
-
-			LRESULT sel = SendMessage(hwndCombo, CB_GETCURSEL, 0, 0);
-			//SetWindowTextW(hwndStatic, items[sel]);
-			switch (sel) {
-			// Line
-			case 0:
-			{
-
-			}
-			break;
-			// Rectangle
-			case 1:
-			{
-
-			}
-			break;
-			// Ellipse
-			case 2:
-			{
-
-			}
-			break;
-			// Polygon
-			case 3:
-			{
-
-			}
-			break;
-
-			}
-
-		}
-
-		return (0);
-
-	}
-	break;
-
-	default: break;
-
-	} // End switch.
-
-	// Process any messages that we did not take care of...
-	return (DefWindowProc(_hwnd, _msg, _wparam, _lparam));
-
-}
-
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -676,7 +605,7 @@ COLORREF ShowColorDialog(HWND hwnd) {
 	cc.lStructSize = sizeof(cc);
 	cc.hwndOwner = hwnd;
 	cc.lpCustColors = (LPDWORD)crCustClr;
-	cc.rgbResult = RGB(0, 255, 0);
+	cc.rgbResult = g_fillColor;
 	cc.Flags = CC_FULLOPEN | CC_RGBINIT;
 	ChooseColor(&cc);
 
@@ -706,5 +635,15 @@ void OpenDialog(HWND hwnd) {
 
 
 	}
+
+}
+
+void UpdateLabel() {
+
+	LRESULT pos = SendMessageW(hTrack, TBM_GETPOS, 0, 0);
+	wchar_t buf[10];
+	wsprintfW(buf, L"Width: %ld", pos);
+	g_width = pos;
+	SetWindowTextW(hlbl, buf);
 
 }

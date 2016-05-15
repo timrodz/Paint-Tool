@@ -26,9 +26,18 @@ CRectangle::~CRectangle() {
 // virtual
 void CRectangle::Draw(HDC _hdc) {
 
-	SelectObject(_hdc, CreateSolidBrush(m_iFillColor));
+	if (m_iBrushStyle == SOLID) {
+		SelectObject(_hdc, CreateSolidBrush(m_iFillColor));
+	}
+	else {
+		SelectObject(_hdc, CreateHatchBrush(m_iHatchStyle, m_iFillColor));
+	}
+
+	SelectObject(_hdc, CreatePen(m_iPenStyle, 1, m_iPenColor));
 
 	Rectangle(_hdc, m_iStartX, m_iStartY, m_iEndX, m_iEndY);
+
+	
 	
 }
 

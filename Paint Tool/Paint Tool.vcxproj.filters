@@ -123,5 +123,8 @@
     <Image Include="resources\colorPicker_1.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="resources\pen_color.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

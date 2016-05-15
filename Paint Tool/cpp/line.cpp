@@ -16,14 +16,17 @@ CLine::~CLine() {}
 // virtual
 void CLine::Draw(HDC _hdc) {
 
-	HPEN green_pen = CreatePen(m_iStyle, m_iWidth, m_Color);
+	//HPEN pen = CreatePen(m_iStyle, m_iWidth, m_Color);
 
-	// Select the pen into the context:
-	HPEN old_pen = static_cast<HPEN>(SelectObject(_hdc, green_pen));
-	MoveToEx(_hdc, m_iStartX, m_iStartY, NULL); // Draw the line...
+	//HPEN old_pen = static_cast<HPEN>(SelectObject(_hdc, pen));
+
+	SelectObject(_hdc, CreatePen(m_iStyle, m_iWidth, m_Color));
+
+	MoveToEx(_hdc, m_iStartX, m_iStartY, NULL);
 	LineTo(_hdc, m_iEndX, m_iEndY);
-	SelectObject(_hdc, old_pen); // Restore old pen.
-	DeleteObject(green_pen); // Delete the green pen.
+	
+	//SelectObject(_hdc, old_pen);
+	//DeleteObject(pen);
 
 }
 

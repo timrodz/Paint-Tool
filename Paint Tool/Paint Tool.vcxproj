@@ -39,10 +39,11 @@
   <ItemGroup>
     <Image Include="resources\brush.ico" />
     <Image Include="resources\circle.ico" />
-    <Image Include="resources\colorPicker.ico" />
+    <Image Include="resources\colorPicker_1.ico" />
     <Image Include="resources\fill_1.ico" />
     <Image Include="resources\icon.ico" />
     <Image Include="resources\polygon.ico" />
+    <Image Include="resources\property.ico" />
     <Image Include="resources\square.ico" />
     <Image Include="resources\toolbar.bmp" />
     <Image Include="resources\new.ico" />

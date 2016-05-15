@@ -25,10 +25,16 @@ CBackBuffer* CCanvas::GetBackBuffer() {
 
 }
 
-bool CCanvas::Initialise(HWND _hwnd, int _iWidth, int _iHeight) {
+bool CCanvas::Initialize(HWND _hwnd, int _iWidth, int _iHeight) {
 
-	m_pBackBuffer->Initialise(_hwnd, _iWidth, _iHeight);
-	m_shapes.clear();
+	//if (m_pBackBuffer == nullptr)
+	//m_pBackBuffer->Initialize(_hwnd, _iWidth, _iHeight);
+	//m_shapes.clear();
+
+	while (m_shapes.size() != 0) {
+		UndoShape();
+	}
+
 	return true;
 
 }
@@ -74,7 +80,9 @@ void CCanvas::UndoShape() {
 
 void CCanvas::RedoShape() {
 
-	m_shapes.push_back(tempShape);
+	if (tempShape != nullptr) {
+		m_shapes.push_back(tempShape);
+	}
 
 }
 

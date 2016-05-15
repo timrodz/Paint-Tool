@@ -117,7 +117,10 @@
     <Image Include="resources\square.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\colorPicker.ico">
+    <Image Include="resources\property.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\colorPicker_1.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

@@ -26,7 +26,7 @@ public:
 
 	CBackBuffer* GetBackBuffer();
 
-	bool Initialise(HWND _hwnd, int _iWidth, int _iHeight);
+	bool Initialize(HWND _hwnd, int _iWidth, int _iHeight);
 	bool Draw(HDC _hdc);
 	void Save(HWND _hwnd);
 	void AddShape(IShape* _s);

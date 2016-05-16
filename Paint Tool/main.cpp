@@ -10,6 +10,7 @@
 #include "h\line.h"
 #include "h\rectangle.h"
 #include "h\ellipse.h"
+#include "h\polygon.h"
 
 // Others
 #include "util.h"
@@ -41,6 +42,8 @@ HWND button_penColor;
 HWND brush_line;
 HWND brush_rect;
 HWND brush_ellipse;
+HWND brush_polygon;
+
 HWND hTrack;
 HWND hlbl;
 
@@ -292,8 +295,19 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_ELLIPSE));
 		SendMessage(brush_ellipse, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
+		// ----------------------------- Polygon
+		brush_ellipse = CreateWindow(
+			L"BUTTON", L"",
+			WS_CHILD | WS_VISIBLE | BS_ICON,
+			308, 0, 44, 44,
+			_hwnd,
+			(HMENU)IDI_ICON_ELLIPSE, GetModuleHandle(NULL), NULL
+		);
+		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_ELLIPSE));
+		SendMessage(brush_ellipse, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
+
 		//// Width trackbar ////
-		HWND hLeftLabel = CreateWindowW(L"Static", L"0",
+		/*HWND hLeftLabel = CreateWindowW(L"Static", L"0",
 			WS_CHILD | WS_VISIBLE, 0, 0, 10, 15, _hwnd, (HMENU)1, NULL, NULL);
 
 		HWND hRightLabel = CreateWindowW(L"Static", L"10",
@@ -317,7 +331,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
 		SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
 		SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
-		SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
+		SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);*/
 
 		//// Registering the canvas and creating the drawing panel ////
 		g_canvas = new CCanvas();
@@ -389,7 +403,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDI_ICON_PENCOLOR:
 			g_penColor = ShowColorDialog(_hwnd);
 			break;
-		// Line
+			// Line
 		case IDI_ICON_BRUSH:
 			g_shape = LINE;
 			break;
@@ -524,6 +538,10 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			currentShape = new CEllipse(g_fillColor);
 			brushType = Button_GetState(brush_ellipse);
 			break;
+		case MAX_SHAPE:
+			currentShape = new CPolygon(g_fillColor);
+			brushType = Button_GetState(brush_polygon);
+			break;
 		default:
 			break;
 		}
@@ -531,10 +549,13 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 		// We can start drawing
 		if (brushType != 0) {
 
-			g_canvas->AddShape(currentShape);
-
-			std::cout << "Creating a shape" << std::endl;
-
+			if (g_shape != MAX_SHAPE) {
+				g_canvas->AddShape(currentShape);
+			} 
+			else {
+			
+			}
+			
 			currentShape->SetStartX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetStartY(static_cast<int>(HIWORD(_lparam)));
 
@@ -574,7 +595,16 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 
 			InvalidateRect(_hwnd, NULL, true);
 
-			bIsDrawing = false;
+			if (g_shape != MAX_SHAPE) {
+				
+				bIsDrawing = false;
+			
+			}
+			else {
+
+
+
+			}
 
 		}
 

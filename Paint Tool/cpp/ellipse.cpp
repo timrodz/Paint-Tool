@@ -30,6 +30,6 @@ void CEllipse::Draw(HDC _hdc) {
 	
 void CEllipse::SetColor(COLORREF _newColor) {
 
-
+	m_Color = _newColor;
 	
 }

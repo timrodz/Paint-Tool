@@ -11,9 +11,6 @@ CCanvas::CCanvas() {
 
 CCanvas::~CCanvas() {
 
-	delete tempShape;
-	tempShape = 0;
-
 	delete m_pBackBuffer;
 	m_pBackBuffer = 0;
 
@@ -29,11 +26,7 @@ bool CCanvas::Initialize(HWND _hwnd, int _iWidth, int _iHeight) {
 
 	//if (m_pBackBuffer == nullptr)
 	//m_pBackBuffer->Initialize(_hwnd, _iWidth, _iHeight);
-	//m_shapes.clear();
-
-	while (m_shapes.size() != 0) {
-		UndoShape();
-	}
+	m_shapes.clear();
 
 	return true;
 
@@ -64,25 +57,6 @@ void CCanvas::Save(HWND _hwnd) {
 void CCanvas::AddShape(IShape* _s) {
 
 	m_shapes.push_back(_s);
-
-}
-
-void CCanvas::UndoShape() {
-	
-	if (m_shapes.size() > 0) {
-
-		tempShape = m_shapes.back();
-		m_shapes.pop_back();
-
-	}
-
-}
-
-void CCanvas::RedoShape() {
-
-	if (tempShape != nullptr) {
-		m_shapes.push_back(tempShape);
-	}
 
 }
 

@@ -1,22 +1,36 @@
 #include "..\h\polygon.h"
 
 CPolygon::CPolygon() {
-	
+
 
 
 }
 
 CPolygon::CPolygon(COLORREF _newColor) {
-	
-	m_Color = _newColor;
 
+	m_bIsShapeComplete = false;
+	m_Color = _newColor;
 	m_pPointList = new POINT[3];
+
+}
+
+CPolygon::CPolygon(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _iPenColor) {
+
+	m_iBrushStyle = _iBrushStyle;
+	m_iHatchStyle = _iHatchStyle;
+	m_iFillColor = _FillColor;
+	m_iPenStyle = _iPenStyle;
+	m_iPenWidth = _iPenWidth;
+	m_iPenColor = _iPenColor;
+
+	m_bIsShapeComplete = false;
+	m_pPointList = new POINT[1];
 
 }
 
 // virtual
 CPolygon::~CPolygon() {
-	
+
 	delete[] m_pPointList;
 	m_pPointList = 0;
 
@@ -24,45 +38,46 @@ CPolygon::~CPolygon() {
 
 // virtual
 void CPolygon::Draw(HDC _hdc) {
-	
-	HPEN pen = CreatePen(PS_SOLID, 1, m_Color);
-	SelectObject(_hdc, pen);
-	MoveToEx(_hdc, m_iStartX, m_iStartY, NULL);
-	LineTo(_hdc, m_iEndX, m_iEndY);
-	DeleteObject(pen);
 
-	//HBRUSH brush = CreateSolidBrush(m_Color);
-	//SelectObject(_hdc, brush);
-	/*POINT Pt[7];
-	Pt[0].x = 20;
-	Pt[0].y = 50;
-	Pt[1].x = 180;
-	Pt[1].y = 50;
-	Pt[2].x = 180;
-	Pt[2].y = 20;
-	Pt[3].x = 230;
-	Pt[3].y = 70;
-	Pt[4].x = 180;
-	Pt[4].y = 120;
-	Pt[5].x = 180;
-	Pt[5].y = 90;
-	Pt[6].x = 20;
-	Pt[6].y = 90;
-	Polygon(_hdc, m_pPointList, sizeof(m_pPointList) / (sizeof(m_pPointList[0])));*/
-	//DeleteObject(brush);
+	if (!m_bIsShapeComplete) {
 
+		HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
+		SelectObject(_hdc, pen);
+		MoveToEx(_hdc, m_iStartX, m_iStartY, NULL);
+		LineTo(_hdc, m_iEndX, m_iEndY);
+		DeleteObject(pen);
 
-}
-	
-void CPolygon::SetColor(COLORREF _newColor) {
-	
-	m_Color = _newColor;
+	}
+	else {
+
+		HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
+		HBRUSH brush = CreateSolidBrush(m_Color);
+		SelectObject(_hdc, brush);
+		SelectObject(_hdc, pen);
+		Polygon(_hdc, m_pPointList, m_nPoints);
+		DeleteObject(brush);
+		DeleteObject(pen);
+
+	}
 
 }
 
-void CPolygon::AddPoint(POINT p) {
-	
-	m_pPointList[m_nPoints] = p;
-	m_nPoints++;
+void CPolygon::CompleteShape(POINT* _points, int _pointAmmount) {
+
+	m_nPoints = _pointAmmount;
+
+	for (int i = 0; i < m_nPoints; i++) {
+
+		m_pPointList[i] = _points[i];
+
+	}
+
+	m_bIsShapeComplete = true;
+
+}
+
+int CPolygon::GetPoints() const {
+
+	return m_nPoints;
 
 }

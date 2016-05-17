@@ -71,6 +71,14 @@ int g_penWidth;
 
 //#define ID_BDIAGONAL 9
 
+// Temporary shapes
+CPolygon* tempPolygon = NULL;
+CStamp* tempStamp = NULL;
+int tempPointAmmount = 0;
+POINT startPoint;
+POINT endPoint;
+POINT* points = new POINT[2];
+
 // Function declarations //
 void RegisterPanel();
 LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _msg, WPARAM _wparam, LPARAM _lparam);
@@ -545,7 +553,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			}
 
 			//// Toolbar ////
-
 		case IDI_ICON_COLOR:
 			g_fillColor = ShowColorDialog(_hwnd);
 			break;
@@ -555,17 +562,33 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			// Line
 		case IDI_ICON_BRUSH:
 			g_shape = LINE;
+			Button_SetState(brush_line, 8);
+			Button_SetState(brush_rect, 0);
+			Button_SetState(brush_ellipse, 0);
+			Button_SetState(brush_polygon, 0);
 			break;
 			// Rectangle
 		case IDI_ICON_RECTANGLE:
 			g_shape = BOX;
+			Button_SetState(brush_line, 0);
+			Button_SetState(brush_rect, 8);
+			Button_SetState(brush_ellipse, 0);
+			Button_SetState(brush_polygon, 0);
 			break;
 			// Ellipse
 		case IDI_ICON_ELLIPSE:
 			g_shape = ELLIPSE;
+			Button_SetState(brush_line, 0);
+			Button_SetState(brush_rect, 0);
+			Button_SetState(brush_ellipse, 8);
+			Button_SetState(brush_polygon, 0);
 			break;
 		case IDI_ICON_POLYGON:
 			g_shape = MAX_SHAPE;
+			Button_SetState(brush_line, 0);
+			Button_SetState(brush_rect, 0);
+			Button_SetState(brush_ellipse, 0);
+			Button_SetState(brush_polygon, 8);
 			break;
 
 		default: break;
@@ -655,11 +678,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 	static int startX, startY;
 	static int endX, endY;
 
-	// Temporary shapes
-	CPolygon* tempPolygon = NULL;
-	CStamp* tempStamp = NULL;
-	POINT startPoint = { 0, 0 };
-	POINT endPoint;
+
 
 	switch (_msg) {
 
@@ -697,7 +716,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			brushType = Button_GetState(brush_ellipse);
 			break;
 		case MAX_SHAPE:
-			currentShape = new CPolygon(g_fillColor);
+			currentShape = new CPolygon(g_brushStyle, g_hatchStyle, g_fillColor, g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_polygon);
 			break;
 		default:
@@ -708,18 +727,14 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 		typeid(currentShape);
 
 		// We can start drawing
-		if (brushType != 0 ) {
+		if (brushType != 0) {
 
 			g_canvas->AddShape(currentShape);
 
 			currentShape->SetStartX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetStartY(static_cast<int>(HIWORD(_lparam)));
 
-			if (g_shape == MAX_SHAPE) {
-
-				//startPoint.x = static_cast<int>(LOWORD(_lparam));
-				//startPoint.y = static_cast<int>(HIWORD(_lparam));
-				//tempPolygon->AddPoint(tempPoint);
+			if (g_shape != MAX_SHAPE) {
 
 			}
 
@@ -766,11 +781,63 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			}
 			else if (g_shape == MAX_SHAPE) {
 
-				if (currentShape->GetStartX() == currentShape->GetEndX()) {
+				startPoint.x = currentShape->GetStartX();
+				startPoint.y = currentShape->GetStartY();
+
+				points[tempPointAmmount] = startPoint;
+				tempPointAmmount++;
+
+				endPoint.x = currentShape->GetEndX();
+				endPoint.y = currentShape->GetEndY();
+
+				points[tempPointAmmount] = endPoint;
+				tempPointAmmount++;
+
+				if (tempPointAmmount > 4) {
+
+					// Since there's a very small (but existant) margin of error
+					// We'll go a few pixels offset so the user doesn't have to be
+					// a 100% precise.
+					bool xNegativeOffset = (points[0].x - 5) <= (points[tempPointAmmount - 1].x);
+					bool xPositiveOffset = (points[0].x + 5) >= (points[tempPointAmmount - 1].x);
+
+					//if (points[0].x == points[tempPointAmmount - 1].x) {
+					if (xNegativeOffset && xPositiveOffset) {
+
+						tempPolygon = dynamic_cast<CPolygon*>(currentShape);
+						tempPolygon->CompleteShape(points, tempPointAmmount);
+						points = new POINT[2];
+						tempPointAmmount = 0;
+						bIsDrawing = false;
+
+					}
+
+				}
+
+				/*tempPolygon->AddPoint(startPoint);
+				tempPolygon->AddPoint(endPoint);*/
+
+				//for (int i = 0; i < tempPolygon->GetPointAmmount(); i++) {
+
+				//	//(i < tempPolygon->GetPointAmmount() - 1) && 
+				//	//tempPolygon->GetPointAmmount() - 1
+
+				//	if (tempPolygon->GetPointAmmount() > 2) {
+				//		PostQuitMessage(0);
+				//	}
+				//	if ((tempPolygon->GetPoint(i).x == tempPolygon->GetPoint(i + 2).x)) {
+
+				//		//PostQuitMessage(0);
+
+				//	}
+
+				//}
+
+				/*if (currentShape->GetStartX() == currentShape->GetEndX()) {
 
 					bIsDrawing = false;
 
-				}
+				}*/
 
 				/*tempPolygon = dynamic_cast<CPolygon*>(currentShape);
 

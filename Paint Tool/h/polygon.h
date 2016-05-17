@@ -11,14 +11,15 @@ class CPolygon : public IShape {
 public:
 	CPolygon();
 	CPolygon(COLORREF _newColor);
+	CPolygon(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _iPenColor);
 	virtual ~CPolygon();
 
 	virtual void Draw(HDC _hdc);
-	
-	void SetColor(COLORREF _newColor);
-	void AddPoint(POINT p);
+	void CompleteShape(POINT* _points, int _pointAmmount);
+	int GetPoints() const;
 
 private:
+	bool m_bIsShapeComplete;
 	COLORREF m_Color;
 	POINT* m_pPointList;
 	int m_nPoints;

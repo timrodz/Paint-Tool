@@ -45,14 +45,17 @@ bool CCanvas::Draw(HDC _hdc) {
 	// Drawing the shapes
 	static std::vector<IShape*>::const_iterator shapes;
 	for (shapes = m_shapes.begin(); shapes != m_shapes.end(); shapes++) {
+
+		
 		(*shapes)->Draw(m_pBackBuffer->GetBFDC());
+
 	}
 
 	// Drawing the stamps
-	static std::vector<CStamp*>::const_iterator stamps;
+	/*static std::vector<CStamp*>::const_iterator stamps;
 	for (stamps = m_vecStamps.begin(); stamps != m_vecStamps.end(); stamps++) {
 		(*stamps)->Draw(m_pBackBuffer->GetBFDC());
-	}
+	}*/
 
 	m_pBackBuffer->Present();
 

@@ -29,8 +29,26 @@ void IShape::SetEndY(int _iEndY) {
 
 }
 
-/* void IShape::SetColor(COLORREF _newColor) {
+const int IShape::GetStartX() const {
 
+	return m_iStartX;
 
-	
-} */
+}
+
+const int IShape::GetEndX() const {
+
+	return m_iEndX;
+
+}
+
+const int IShape::GetStartY() const {
+
+	return m_iStartY;
+
+}
+
+const int IShape::GetEndY() const {
+
+	return m_iEndY;
+
+}

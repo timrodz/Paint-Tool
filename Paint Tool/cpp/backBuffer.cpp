@@ -1,41 +1,25 @@
 #include "..\h\backBuffer.h"
 
-//CBackBuffer::CBackBuffer() :
-//	m_hWnd(0),
-//	m_hDC(0),
-//	m_hSurface(0),
-//	m_hOldBitmap(0),
-//	m_iWidth(0),
-//	m_iHeight(0)
-//{}
-
-CBackBuffer::CBackBuffer() : 
-	m_hWnd(0), 
-	m_hDC(0), 
-	m_hSurface(0), 
-	m_hOldObject(0), 
-	m_iWidth(0), 
+CBackBuffer::CBackBuffer() :
+	m_hwnd(0),
+	m_BFDC(0),
+	m_hBFBitmap(0),
+	m_hOldBitmap(0),
+	m_iWidth(0),
 	m_iHeight(0)
-{
-
-}
+{}
 
 CBackBuffer::~CBackBuffer() {
 
-	/*SelectObject(m_HDC, m_hOldBitmap);
+	SelectObject(m_BFDC, m_hOldBitmap);
 	DeleteObject(m_hBFBitmap);
-	DeleteObject(m_BFDC);*/
-
-	SelectObject(m_hDC, m_hOldObject);
-
-	DeleteObject(m_hSurface);
-	DeleteObject(m_hDC);
+	DeleteObject(m_BFDC);
 
 }
 
-bool CBackBuffer::Initialize(HWND _hWnd, int _iWidth, int _iHeight) {
+bool CBackBuffer::Initialize(HWND _hwnd, int _iWidth, int _iHeight) {
 
-	/*m_hwnd = _hwnd;
+	m_hwnd = _hwnd;
 	m_iWidth = _iWidth;
 	m_iHeight = _iHeight;
 
@@ -49,44 +33,45 @@ bool CBackBuffer::Initialize(HWND _hWnd, int _iWidth, int _iHeight) {
 
 	m_hOldBitmap = static_cast<HBITMAP>(SelectObject(m_BFDC, m_hBFBitmap));
 
-	HBRUSH brush_white = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
+	HBRUSH brush_white = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 	HBRUSH brush_old = static_cast<HBRUSH>(SelectObject(m_BFDC, brush_white));
 
 	Rectangle(m_BFDC, 0, 0, m_iWidth, m_iHeight);
 
 	SelectObject(m_BFDC, brush_old);
 
-	return true;*/
+	return true;
 
-	m_hWnd = _hWnd;
+}
 
-	m_iWidth = _iWidth;
-	m_iHeight = _iHeight;
+void CBackBuffer::Clear() {
 
-	HDC hWindowDC = ::GetDC(m_hWnd);
+	HBRUSH brush_old = static_cast<HBRUSH>(SelectObject(GetBFDC(), GetStockObject(WHITE_BRUSH)));
 
-	m_hDC = CreateCompatibleDC(hWindowDC);
+	HPEN pen = CreatePen(PS_SOLID, 0, RGB(44, 44, 44));
+	SelectObject(m_BFDC, pen);
 
-	m_hSurface = CreateCompatibleBitmap(hWindowDC, m_iWidth, m_iHeight);
+	Rectangle(GetBFDC(), -1, 0, GetWidth(), GetHeight());
 
-	ReleaseDC(m_hWnd, hWindowDC);
+	SelectObject(GetBFDC(), brush_old);
 
-	m_hOldObject = static_cast<HBITMAP>(SelectObject(m_hDC, m_hSurface));
+	DeleteObject(pen);
 
-	HBRUSH brushWhite = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH));
-	HBRUSH oldBrush = static_cast<HBRUSH>(SelectObject(m_hDC, brushWhite));
+}
 
-	Rectangle(m_hDC, 0, 0, m_iWidth, m_iHeight);
+void CBackBuffer::Present() {
 
-	SelectObject(m_hDC, oldBrush);
+	HDC hWindowDC = ::GetDC(m_hwnd);
 
-	return (true);
+	BitBlt(hWindowDC, 0, 0, GetWidth(), GetHeight(), GetBFDC(), 0, 0, SRCCOPY);
+
+	ReleaseDC(m_hwnd, hWindowDC);
 
 }
 
 HDC CBackBuffer::GetBFDC() const {
 
-	return m_hDC;
+	return m_BFDC;
 
 }
 
@@ -99,37 +84,5 @@ int CBackBuffer::GetHeight() const {
 int CBackBuffer::GetWidth() const {
 
 	return m_iWidth;
-
-}
-
-void CBackBuffer::Clear() {
-
-	/*HBRUSH brush_old = static_cast<HBRUSH>(SelectObject(GetBFDC(), GetStockObject(LTGRAY_BRUSH)));
-
-	Rectangle(GetBFDC(), 0, 0, m_iWidth, m_iHeight);
-
-	SelectObject(GetBFDC(), brush_old);*/
-
-	HBRUSH hOldBrush = static_cast<HBRUSH>(SelectObject(GetBFDC(), GetStockObject(LTGRAY_BRUSH)));
-
-	Rectangle(GetBFDC(), 0, 0, GetWidth(), GetHeight());
-
-	SelectObject(GetBFDC(), hOldBrush);
-
-}
-
-void CBackBuffer::Present() {
-
-	/*HDC hWindowDC = GetDC(m_hWnd);
-
-	BitBlt(hWindowDC, 0, 0, m_iWidth, m_iHeight, m_HDC, 0, 0, SRCCOPY);
-
-	ReleaseDC(m_hWnd, hWindowDC);*/
-
-	HDC hWndDC = ::GetDC(m_hWnd);
-
-	BitBlt(hWndDC, 0, 0, m_iWidth, m_iHeight, m_hDC, 0, 0, SRCCOPY);
-
-	ReleaseDC(m_hWnd, hWndDC);
 
 }

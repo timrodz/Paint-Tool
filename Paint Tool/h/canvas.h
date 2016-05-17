@@ -31,10 +31,10 @@ public:
 	void Save(HWND _hwnd);
 	void AddShape(IShape* _s);
 	void AddStamp(CStamp* _s);
-	
+
 private:
 	CBackBuffer* m_pBackBuffer; // A canvas has a backbuffer. Stops flickering
-	// std::vector<CStamp*> m_vecStamps;
+	std::vector<CStamp*> m_vecStamps;
 	std::vector<IShape*> m_shapes; // container to store shapes
 };
 

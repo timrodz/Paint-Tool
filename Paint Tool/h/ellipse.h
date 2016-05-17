@@ -10,15 +10,10 @@ class CEllipse : public IShape
 {
 public:
 	CEllipse();
-	CEllipse(COLORREF _newColor);
+	CEllipse(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _PenColor);
 	virtual ~CEllipse();
 
 	virtual void Draw(HDC _hdc);
-	
-	void SetColor(COLORREF _newColor);
-
-private:
-	COLORREF m_Color;
 
 };
 

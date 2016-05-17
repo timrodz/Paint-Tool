@@ -4,11 +4,11 @@ CLine::CLine() {}
 
 CLine::CLine(int _iStyle, int _iWidth, COLORREF _newColor) {
 
-	m_iStyle = _iStyle;
-	m_iWidth = _iWidth;
-	m_Color = _newColor;
+	 m_iPenWidth = _iWidth;
+	 m_iPenStyle = _iStyle;
+	 m_iPenColor = _newColor;
 
-} 
+}
 
 // virtual
 CLine::~CLine() {}
@@ -16,14 +16,10 @@ CLine::~CLine() {}
 // virtual
 void CLine::Draw(HDC _hdc) {
 
-	SelectObject(_hdc, CreatePen(m_iStyle, m_iWidth, m_Color));
+	HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
+	SelectObject(_hdc, pen);
 	MoveToEx(_hdc, m_iStartX, m_iStartY, NULL);
 	LineTo(_hdc, m_iEndX, m_iEndY);
-
-}
-
-void CLine::SetWidth(int _iNewWidth) {
-
-	m_iWidth = _iNewWidth;
+	DeleteObject(pen);
 
 }

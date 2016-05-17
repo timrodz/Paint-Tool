@@ -3,7 +3,6 @@
 #include <commctrl.h>
 #include <strstream>
 #include <string>
-#include <iostream>
 
 // Paint Tool library
 #include "h\canvas.h"
@@ -11,6 +10,7 @@
 #include "h\rectangle.h"
 #include "h\ellipse.h"
 #include "h\polygon.h"
+#include "h\stamp.h"
 
 // Others
 #include "util.h"
@@ -21,10 +21,11 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 // The two main windows
-#define WINDOW_CLASS_NAME     L"WINCLASS1" // Toolbar, menu
-#define WINDOW_CLASS_PANEL    L"WINCLASS2" // Drawing canvas
+#define WINDOW_CLASS_NAME  L"WINCLASS1" // Toolbar, menu
+#define WINDOW_CLASS_PANEL L"WINCLASS2" // Drawing canvas
 
 HWND g_hwnd;
+HMENU hMenu;
 HINSTANCE g_hInstance;
 CCanvas* g_canvas;
 IShape* currentShape;
@@ -54,7 +55,7 @@ COLORREF g_penColor = RGB(0, 0, 0);
 EBRUSHSTYLE g_brushStyle;
 int g_hatchStyle;
 int g_penStyle;
-int g_width;
+int g_penWidth;
 
 // Brush styles
 #define ID_SOLID 1
@@ -98,7 +99,7 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 	HWND hwnd;			 // Generic window handle.
 	MSG msg;			 // Generic message.
 
-	//// First fill in the window class structure ////
+						 //// First fill in the window class structure ////
 	wndMenu.cbSize = sizeof(WNDCLASSEX);
 	wndMenu.style = CS_DBLCLKS | CS_OWNDC | CS_VREDRAW;
 	wndMenu.lpfnWndProc = WindowProc;
@@ -118,7 +119,7 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 	}
 
 	// Create the menu
-	HMENU _hMenu = LoadMenu(_hInstance, MAKEINTRESOURCE(IDR_MENU));
+	hMenu = LoadMenu(_hInstance, MAKEINTRESOURCE(IDR_MENU));
 
 	// Centering the window based on the screen's resolution
 	int screenX = GetSystemMetrics(SM_CXSCREEN);
@@ -133,7 +134,7 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 		L"Paint Tool by Juan Rodriguez",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		centerX, centerY, WIDTH, HEIGHT,
-		NULL, _hMenu, _hInstance, NULL);
+		NULL, hMenu, _hInstance, NULL);
 
 	if (!(hwnd)) {
 		return (0);
@@ -159,10 +160,6 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 			DispatchMessage(&msg);
 
 		}
-
-
-		// Main game processing goes here.
-		//GameLoop(); //One frame of game logic occurs here...
 
 	}
 
@@ -296,18 +293,18 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		SendMessage(brush_ellipse, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 		// ----------------------------- Polygon
-		brush_ellipse = CreateWindow(
+		brush_polygon = CreateWindow(
 			L"BUTTON", L"",
 			WS_CHILD | WS_VISIBLE | BS_ICON,
 			308, 0, 44, 44,
 			_hwnd,
-			(HMENU)IDI_ICON_ELLIPSE, GetModuleHandle(NULL), NULL
+			(HMENU)IDI_ICON_POLYGON, GetModuleHandle(NULL), NULL
 		);
-		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_ELLIPSE));
-		SendMessage(brush_ellipse, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
+		hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_POLYGON));
+		SendMessage(brush_polygon, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 		//// Width trackbar ////
-		/*HWND hLeftLabel = CreateWindowW(L"Static", L"0",
+		HWND hLeftLabel = CreateWindowW(L"Static", L"0",
 			WS_CHILD | WS_VISIBLE, 0, 0, 10, 15, _hwnd, (HMENU)1, NULL, NULL);
 
 		HWND hRightLabel = CreateWindowW(L"Static", L"10",
@@ -331,7 +328,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
 		SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
 		SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM)hLeftLabel);
-		SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);*/
+		SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM)hRightLabel);
 
 		//// Registering the canvas and creating the drawing panel ////
 		g_canvas = new CCanvas();
@@ -339,11 +336,13 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		RegisterPanel();
 
 		// Drawing panel
-		hwndPanel = CreateWindowW(WINDOW_CLASS_PANEL, NULL,
+		hwndPanel = CreateWindow(WINDOW_CLASS_PANEL, NULL,
 			WS_CHILD | WS_VISIBLE,
 			0, 44,
 			GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), // Basically the size of the current window
-			_hwnd, (HMENU)1, NULL, NULL);
+			_hwnd, (HMENU)1, g_hInstance, NULL);
+
+		g_canvas->Initialize(hwndPanel, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 
 		// Register the hotkeys
 		//RegisterHotKey(_hwnd, 1, MOD_CONTROL | MOD_NOREPEAT, 'N'); // CTRL + N
@@ -353,8 +352,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		//RegisterHotKey(_hwnd, 5, MOD_CONTROL | MOD_NOREPEAT, 'Q'); // CTRL + Q
 		//RegisterHotKey(_hwnd, 6, MOD_CONTROL | MOD_NOREPEAT, 'Z'); // CTRL + Z
 		//RegisterHotKey(_hwnd, 7, MOD_CONTROL | MOD_NOREPEAT, 'Y'); // CTRL + Y
-
-		g_canvas->Initialize(hwndPanel, WIDTH, HEIGHT);
 
 		return (0);
 
@@ -366,15 +363,22 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 
 		switch (LOWORD(_wparam)) {
 
-			// File Menu
+			//// File Menu ////
 		case IDM_FILE_NEW:
-
-			break;
+		{
+			hwndPanel = CreateWindow(WINDOW_CLASS_PANEL, NULL,
+				WS_CHILD | WS_VISIBLE,
+				0, 44,
+				GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), // Basically the size of the current window
+				_hwnd, (HMENU)1, g_hInstance, NULL);
+			g_canvas->Initialize(hwndPanel, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+		}
+		break;
 		case IDM_FILE_OPEN:
 			OpenDialog(_hwnd);
 			break;
 		case IDM_FILE_SAVE:
-
+			g_canvas->Save(hwndPanel);
 			break;
 		case IDM_FILE_SAVE_AS:
 
@@ -386,16 +390,161 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDM_HELP_ABOUT:
 			MessageBox(_hwnd, L"Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", L"About", MB_OK);
 			break;
-		case IDM_BRUSH_LINE:
-			g_shape = LINE;
-			break;
-		case IDM_BRUSH_RECTANGLE:
-			g_shape = BOX;
-			break;
-		case IDM_BRUSH_ELLIPSE:
-			g_shape = ELLIPSE;
-			break;
-			// Menu with icons
+
+			//// Pen styles ////
+			{
+		case ID_PEN_SOLID:
+		{
+			g_penStyle = PS_SOLID;
+			CheckMenuItem(hMenu, ID_PEN_SOLID, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DOTTED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOTDOT, MF_UNCHECKED);
+		}
+		break;
+		case ID_PEN_DASHED:
+		{
+			g_penStyle = PS_DASH;
+			CheckMenuItem(hMenu, ID_PEN_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHED, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DOTTED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOTDOT, MF_UNCHECKED);
+		}
+		break;
+		case ID_PEN_DOTTED:
+		{
+			g_penStyle = PS_DOT;
+			CheckMenuItem(hMenu, ID_PEN_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DOTTED, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOTDOT, MF_UNCHECKED);
+		}
+		break;
+		case ID_PEN_DASHDOT:
+		{
+			g_penStyle = PS_DASHDOT;
+			CheckMenuItem(hMenu, ID_PEN_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DOTTED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOT, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOTDOT, MF_UNCHECKED);
+		}
+		break;
+		case ID_PEN_DASHDOTDOT:
+		{
+			g_penStyle = PS_DASHDOTDOT;
+			CheckMenuItem(hMenu, ID_PEN_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DOTTED, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_PEN_DASHDOTDOT, MF_CHECKED);
+		}
+		break;
+			}
+
+
+			//// Brush styles ////
+			{
+		case ID_BRUSH_SOLID:
+		{
+			g_brushStyle = SOLID;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+		case ID_HATCH_CROSS_DIAGONAL:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_BDIAGONAL;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+		case ID_HATCH_CROSS_STRAIGHT:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_CROSS;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+
+		case ID_HATCH_DIAGONAL_UP:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_DIAGCROSS;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+
+		case ID_HATCH_DIAGONAL_DOWN:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_FDIAGONAL;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+
+		case ID_HATCH_LINE_HOR:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_HORIZONTAL;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_CHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_UNCHECKED);
+		}
+		break;
+
+		case ID_HATCH_LINE_VER:
+		{
+			g_brushStyle = HATCH;
+			g_hatchStyle = HS_VERTICAL;
+			CheckMenuItem(hMenu, ID_BRUSH_SOLID, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_DIAGONAL, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_CROSS_STRAIGHT, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_UP, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_DIAGONAL_DOWN, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_HOR, MF_UNCHECKED);
+			CheckMenuItem(hMenu, ID_HATCH_LINE_VER, MF_CHECKED);
+		}
+		break;
+			}
+
+			//// Toolbar ////
 
 		case IDI_ICON_COLOR:
 			g_fillColor = ShowColorDialog(_hwnd);
@@ -414,6 +563,9 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			// Ellipse
 		case IDI_ICON_ELLIPSE:
 			g_shape = ELLIPSE;
+			break;
+		case IDI_ICON_POLYGON:
+			g_shape = MAX_SHAPE;
 			break;
 
 		default: break;
@@ -434,29 +586,29 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 	/*case WM_HOTKEY:
 	{
 	case 'N':
-		MessageBoxA(_hwnd, "CTRL + N", "IMPORTANT", MB_OK);
-		SendMessage(button_new, BM_CLICK, 0, 0);
-		break;
+	MessageBoxA(_hwnd, "CTRL + N", "IMPORTANT", MB_OK);
+	SendMessage(button_new, BM_CLICK, 0, 0);
+	break;
 	case 'O':
-		MessageBoxA(_hwnd, "CTRL + O", "IMPORTANT", MB_OK);
-		SendMessage(button_new, BM_CLICK, 0, 0);
-		break;
+	MessageBoxA(_hwnd, "CTRL + O", "IMPORTANT", MB_OK);
+	SendMessage(button_new, BM_CLICK, 0, 0);
+	break;
 	case 'S':
-		MessageBoxA(_hwnd, "CTRL + S", "IMPORTANT", MB_OK);
-		SendMessage(button_new, BM_CLICK, 0, 0);
-		break;
+	MessageBoxA(_hwnd, "CTRL + S", "IMPORTANT", MB_OK);
+	SendMessage(button_new, BM_CLICK, 0, 0);
+	break;
 	case 'Q':
-		MessageBoxA(_hwnd, "CTRL + Q", "IMPORTANT", MB_OK);
-		PostQuitMessage(0);
-		break;
+	MessageBoxA(_hwnd, "CTRL + Q", "IMPORTANT", MB_OK);
+	PostQuitMessage(0);
+	break;
 	case 'Z':
-		g_canvas->UndoShape();
-		break;
+	g_canvas->UndoShape();
+	break;
 	case 'Y':
-		g_canvas->RedoShape();
-		break;
+	g_canvas->RedoShape();
+	break;
 
-		return (0);
+	return (0);
 
 	}
 	break;*/
@@ -475,7 +627,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 
 	} // End switch.
 
-	// Process any messages that we did not take care of...
+	  // Process any messages that we did not take care of...
 	return (DefWindowProc(_hwnd, _msg, _wparam, _lparam));
 
 }
@@ -503,6 +655,12 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 	static int startX, startY;
 	static int endX, endY;
 
+	// Temporary shapes
+	CPolygon* tempPolygon = NULL;
+	CStamp* tempStamp = NULL;
+	POINT startPoint = { 0, 0 };
+	POINT endPoint;
+
 	switch (_msg) {
 
 	case WM_PAINT:
@@ -527,15 +685,15 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 		switch (g_shape) {
 
 		case LINE:
-			currentShape = new CLine(g_penStyle, g_width, g_penColor);
+			currentShape = new CLine(g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_line);
 			break;
 		case BOX:
-			currentShape = new CRectangle(g_brushStyle, g_hatchStyle, g_fillColor, g_penStyle, g_penColor);
+			currentShape = new CRectangle(g_brushStyle, g_hatchStyle, g_fillColor, g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_rect);
 			break;
 		case ELLIPSE:
-			currentShape = new CEllipse(g_fillColor);
+			currentShape = new CEllipse(g_brushStyle, g_hatchStyle, g_fillColor, g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_ellipse);
 			break;
 		case MAX_SHAPE:
@@ -544,20 +702,26 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			break;
 		default:
 			break;
+
 		}
 
-		// We can start drawing
-		if (brushType != 0) {
+		typeid(currentShape);
 
-			if (g_shape != MAX_SHAPE) {
-				g_canvas->AddShape(currentShape);
-			} 
-			else {
-			
-			}
-			
+		// We can start drawing
+		if (brushType != 0 ) {
+
+			g_canvas->AddShape(currentShape);
+
 			currentShape->SetStartX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetStartY(static_cast<int>(HIWORD(_lparam)));
+
+			if (g_shape == MAX_SHAPE) {
+
+				//startPoint.x = static_cast<int>(LOWORD(_lparam));
+				//startPoint.y = static_cast<int>(HIWORD(_lparam));
+				//tempPolygon->AddPoint(tempPoint);
+
+			}
 
 			bIsDrawing = true;
 
@@ -576,7 +740,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			currentShape->SetEndX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetEndY(static_cast<int>(HIWORD(_lparam)));
 
-			InvalidateRect(_hwnd, NULL, true);
+			InvalidateRect(_hwnd, NULL, false);
 
 		}
 
@@ -593,16 +757,30 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			currentShape->SetEndX(static_cast<int>(LOWORD(_lparam)));
 			currentShape->SetEndY(static_cast<int>(HIWORD(_lparam)));
 
-			InvalidateRect(_hwnd, NULL, true);
+			InvalidateRect(_hwnd, NULL, false);
 
 			if (g_shape != MAX_SHAPE) {
-				
+
 				bIsDrawing = false;
-			
+
 			}
-			else {
+			else if (g_shape == MAX_SHAPE) {
 
+				if (currentShape->GetStartX() == currentShape->GetEndX()) {
 
+					bIsDrawing = false;
+
+				}
+
+				/*tempPolygon = dynamic_cast<CPolygon*>(currentShape);
+
+				endPoint.x = static_cast<int>(LOWORD(_lparam));
+				endPoint.y = static_cast<int>(HIWORD(_lparam));
+				tempPolygon->AddPoint(startPoint);
+				tempPolygon->AddPoint(endPoint);*/
+
+				//delete tempPolygon;
+				//tempPolygon = 0;
 
 			}
 
@@ -643,7 +821,7 @@ COLORREF ShowColorDialog(HWND hwnd) {
 
 }
 
-void OpenDialog(HWND hwnd) {
+void OpenDialog(HWND _hwnd) {
 
 	OPENFILENAME ofn;
 	char szFileName[MAX_PATH] = "";
@@ -651,8 +829,7 @@ void OpenDialog(HWND hwnd) {
 	ZeroMemory(&ofn, sizeof(ofn));
 
 	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
-	ofn.hwndOwner = hwnd;
-	//ofn.lpstrFilter = L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+	ofn.hwndOwner = _hwnd;
 	ofn.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0";
 	ofn.lpstrFile = (LPWSTR)szFileName;
 	ofn.nMaxFile = MAX_PATH;
@@ -662,7 +839,9 @@ void OpenDialog(HWND hwnd) {
 	// Do something usefull with the filename stored in szFileName 
 	if (GetOpenFileName(&ofn)) {
 
-
+		//currentShape = new CStamp(g_hInstance, (LPWSTR)szFileName, currentShape->GetStartX(), currentShape->GetStartY());
+		currentShape = new CStamp(g_hInstance, (LPWSTR)szFileName);
+		g_canvas->AddStamp((CStamp*)currentShape);
 
 	}
 
@@ -673,7 +852,7 @@ void UpdateLabel() {
 	LRESULT pos = SendMessageW(hTrack, TBM_GETPOS, 0, 0);
 	wchar_t buf[10];
 	wsprintfW(buf, L"Width: %ld", pos);
-	g_width = pos;
+	g_penWidth = pos;
 	SetWindowTextW(hlbl, buf);
 
 }

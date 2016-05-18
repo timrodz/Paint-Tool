@@ -1,10 +1,6 @@
 #include "..\h\rectangle.h"
 
-CRectangle::CRectangle() {
-
-
-
-}
+CRectangle::CRectangle() {}
 
 CRectangle::CRectangle(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _iPenColor) {
 
@@ -18,11 +14,7 @@ CRectangle::CRectangle(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _Fil
 }
 
 // virtual
-CRectangle::~CRectangle() {
-
-
-
-}
+CRectangle::~CRectangle() {}
 
 // virtual
 void CRectangle::Draw(HDC _hdc) {

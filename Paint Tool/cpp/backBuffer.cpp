@@ -63,6 +63,8 @@ void CBackBuffer::Present() {
 
 	HDC hWindowDC = ::GetDC(m_hwnd);
 
+	
+
 	BitBlt(hWindowDC, 0, 0, GetWidth(), GetHeight(), GetBFDC(), 0, 0, SRCCOPY);
 
 	ReleaseDC(m_hwnd, hWindowDC);
@@ -72,6 +74,24 @@ void CBackBuffer::Present() {
 HDC CBackBuffer::GetBFDC() const {
 
 	return m_BFDC;
+
+}
+
+void CBackBuffer::SetBFBitmap(HBITMAP _bitmap) {
+
+	m_hBFBitmap = _bitmap;
+
+}
+
+HBITMAP CBackBuffer::GetBFBitmap() const {
+
+	return m_hBFBitmap;
+
+}
+
+HWND CBackBuffer::GetHWND() const {
+
+	return m_hwnd;
 
 }
 

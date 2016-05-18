@@ -1,30 +1,17 @@
 #include "..\h\polygon.h"
 
-CPolygon::CPolygon() {
-
-
-
-}
-
-CPolygon::CPolygon(COLORREF _newColor) {
-
-	m_bIsShapeComplete = false;
-	m_Color = _newColor;
-	m_pPointList = new POINT[3];
-
-}
+CPolygon::CPolygon() {}
 
 CPolygon::CPolygon(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _iPenColor) {
 
+	m_pPointList = new POINT[100];
 	m_iBrushStyle = _iBrushStyle;
 	m_iHatchStyle = _iHatchStyle;
 	m_iFillColor = _FillColor;
 	m_iPenStyle = _iPenStyle;
 	m_iPenWidth = _iPenWidth;
 	m_iPenColor = _iPenColor;
-
-	m_bIsShapeComplete = false;
-	m_pPointList = new POINT[1];
+	m_nPoints = 0;
 
 }
 
@@ -39,40 +26,33 @@ CPolygon::~CPolygon() {
 // virtual
 void CPolygon::Draw(HDC _hdc) {
 
-	if (!m_bIsShapeComplete) {
+	// Create Objects
+	HBRUSH brush = nullptr;
 
-		HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
-		SelectObject(_hdc, pen);
-		MoveToEx(_hdc, m_iStartX, m_iStartY, NULL);
-		LineTo(_hdc, m_iEndX, m_iEndY);
-		DeleteObject(pen);
-
+	if (m_iBrushStyle == SOLID) {
+		brush = CreateSolidBrush(m_iFillColor);
 	}
 	else {
-
-		HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
-		HBRUSH brush = CreateSolidBrush(m_Color);
-		SelectObject(_hdc, brush);
-		SelectObject(_hdc, pen);
-		Polygon(_hdc, m_pPointList, m_nPoints);
-		DeleteObject(brush);
-		DeleteObject(pen);
+		brush = CreateHatchBrush(m_iHatchStyle, m_iFillColor);
 
 	}
+
+	HPEN pen = CreatePen(m_iPenStyle, m_iPenWidth, m_iPenColor);
+
+	SelectObject(_hdc, brush);
+	SelectObject(_hdc, pen);
+
+	Polygon(_hdc, m_pPointList, m_nPoints);
+
+	DeleteObject(brush);
+	DeleteObject(pen);
 
 }
 
-void CPolygon::CompleteShape(POINT* _points, int _pointAmmount) {
+void CPolygon::AddPoint(POINT _p) {
 
-	m_nPoints = _pointAmmount;
-
-	for (int i = 0; i < m_nPoints; i++) {
-
-		m_pPointList[i] = _points[i];
-
-	}
-
-	m_bIsShapeComplete = true;
+	m_pPointList[m_nPoints] = _p;
+	m_nPoints++;
 
 }
 

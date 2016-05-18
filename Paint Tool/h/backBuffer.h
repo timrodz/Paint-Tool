@@ -12,13 +12,15 @@ public:
 
 	bool Initialize(HWND _hwnd, int _iWidth, int _iHeight);
 
-	HDC GetBFDC() const;
-
-	int GetHeight() const;
-	int GetWidth() const;
-
 	void Clear();
 	void Present();
+
+	HDC GetBFDC() const;
+	void SetBFBitmap(HBITMAP _bitmap);
+	HBITMAP GetBFBitmap() const;
+	HWND GetHWND() const;
+	int GetHeight() const;
+	int GetWidth() const;
 
 	// Can't be copied
 private:

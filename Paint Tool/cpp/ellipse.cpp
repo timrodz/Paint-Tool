@@ -6,14 +6,6 @@ CEllipse::CEllipse() {
 
 }
 
-//CEllipse::CEllipse(COLORREF _iPenColor) {
-//
-//	m_Color = _iPenColor;
-//
-//
-//
-//}
-
 CEllipse::CEllipse(EBRUSHSTYLE _iBrushStyle, int _iHatchStyle, COLORREF _FillColor, int _iPenStyle, int _iPenWidth, COLORREF _iPenColor) {
 
 	m_iBrushStyle = _iBrushStyle;

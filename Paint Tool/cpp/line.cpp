@@ -4,9 +4,9 @@ CLine::CLine() {}
 
 CLine::CLine(int _iStyle, int _iWidth, COLORREF _newColor) {
 
-	 m_iPenWidth = _iWidth;
-	 m_iPenStyle = _iStyle;
-	 m_iPenColor = _newColor;
+	m_iPenWidth = _iWidth;
+	m_iPenStyle = _iStyle;
+	m_iPenColor = _newColor;
 
 }
 

@@ -46,6 +46,7 @@
     <Image Include="resources\polygon.ico" />
     <Image Include="resources\property.ico" />
     <Image Include="resources\square.ico" />
+    <Image Include="resources\stamp.ico" />
     <Image Include="resources\toolbar.bmp" />
     <Image Include="resources\new.ico" />
     <Image Include="resources\open.ico" />

@@ -45,10 +45,12 @@ HWND button_fillColor;
 HWND button_penColor;
 
 // Brushes //
+HWND brush_pen;
 HWND brush_line;
 HWND brush_rect;
 HWND brush_ellipse;
 HWND brush_polygon;
+HWND brush_stamp;
 
 // Trackbar //
 HWND hTrack;
@@ -64,15 +66,10 @@ int g_penWidth = 0;
 
 // Temporary shapes //
 CPolygon* tempPolygon = NULL;
-HBITMAP* tempBitmap = NULL;
+HBITMAP tempBitmap = NULL;
 CStamp* tempStamp = NULL;
 POINT tempStartPoint;
 POINT tempEndPoint;
-
-// Hotkeys //
-bool ctrlN;
-bool ctrlO;
-bool ctrlS;
 
 // Function declarations //
 LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _msg, WPARAM _wparam, LPARAM _lparam);
@@ -81,7 +78,7 @@ COLORREF ShowColorDialog(HWND hwnd);
 void RegisterPanel(HWND _hwnd);
 void CreateButtons(HWND _hwnd);
 void CreateMenubar(HWND);
-HBITMAP* OpenBitmapImage(HWND);
+HBITMAP OpenBitmapImage(HWND);
 void UpdateLabel();
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
@@ -142,7 +139,7 @@ int WINAPI WinMain(HINSTANCE _hInstance,
 
 	// Creating the window
 	hwnd = CreateWindow(WINDOW_CLASS_NAME,
-		L"Paint Tool by Juan Rodriguez",
+		L"Paint Tool v1.0.0 by Juan Rodriguez",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		centerX, centerY, WIDTH, HEIGHT,
 		NULL, hMenu, _hInstance, NULL);
@@ -220,8 +217,8 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			RegisterPanel(_hwnd);
 			break;
 		case IDM_FILE_OPEN:
-			tempBitmap = new HBITMAP();
 			tempBitmap = OpenBitmapImage(_hwnd);
+			//g_shape = STAMP;
 			RegisterPanel(_hwnd);
 			break;
 		case IDM_FILE_SAVE:
@@ -232,9 +229,11 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			break;
 			// Help menu
 		case IDM_HELP_ABOUT:
-			MessageBox(_hwnd, L"Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", L"About", MB_OK);
+			MessageBoxA(_hwnd, "Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", "About", MB_OK);
 			break;
-
+		case IDM_HELP_CONTROLS:
+			MessageBoxA(_hwnd, "Undo\tCTRL+Z\nRedo\tCTRL+Y\n", "Controls", MB_OK);
+			break;
 			//// Pen styles ////
 			{
 		case ID_PEN_SOLID:
@@ -395,36 +394,63 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDI_ICON_PENCOLOR:
 			g_penColor = ShowColorDialog(_hwnd);
 			break;
+		/*case IDI_ICON_PEN:
+			g_shape = PEN;
+			Button_SetState(brush_pen, 8);
+			Button_SetState(brush_line, 0);
+			Button_SetState(brush_rect, 0);
+			Button_SetState(brush_ellipse, 0);
+			Button_SetState(brush_polygon, 0);
+			Button_SetState(brush_stamp, 0);
+			break;*/
 			// Line
 		case IDI_ICON_BRUSH:
 			g_shape = LINE;
+			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 8);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 0);
 			Button_SetState(brush_polygon, 0);
+			Button_SetState(brush_stamp, 0);
 			break;
 			// Rectangle
 		case IDI_ICON_RECTANGLE:
 			g_shape = RECTANGLE;
+			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 8);
 			Button_SetState(brush_ellipse, 0);
 			Button_SetState(brush_polygon, 0);
+			Button_SetState(brush_stamp, 0);
 			break;
 			// Ellipse
 		case IDI_ICON_ELLIPSE:
 			g_shape = ELLIPSE;
+			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 8);
 			Button_SetState(brush_polygon, 0);
+			Button_SetState(brush_stamp, 0);
 			break;
 		case IDI_ICON_POLYGON:
 			g_shape = POLYGON;
+			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 0);
 			Button_SetState(brush_polygon, 8);
+			Button_SetState(brush_stamp, 0);
+			break;
+		case IDI_ICON_STAMP:
+			tempBitmap = OpenBitmapImage(_hwnd);
+			g_shape = STAMP;
+			Button_SetState(brush_pen, 0);
+			Button_SetState(brush_line, 0);
+			Button_SetState(brush_rect, 0);
+			Button_SetState(brush_ellipse, 0);
+			Button_SetState(brush_polygon, 0);
+			Button_SetState(brush_stamp, 8);
 			break;
 
 		default: break;
@@ -517,7 +543,6 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			 // Positions for drawing
 	static bool bIsDrawing = false;
 	static int startX, startY;
-	static int endX, endY;
 
 	switch (_msg) {
 
@@ -543,6 +568,10 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 
 		switch (g_shape) {
 
+		case PEN:
+			//currentShape = new CLine(g_penStyle, g_penWidth, g_penColor);
+			brushType = Button_GetState(brush_pen);
+			break;
 		case LINE:
 			currentShape = new CLine(g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_line);
@@ -559,6 +588,10 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			tempPolygon = new CPolygon(g_brushStyle, g_hatchStyle, g_fillColor, g_penStyle, g_penWidth, g_penColor);
 			brushType = Button_GetState(brush_polygon);
 			break;
+		case STAMP:
+			startX = 0;
+			startY = 0;
+			brushType = Button_GetState(button_open);
 		default:
 			break;
 
@@ -567,7 +600,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 		// We can start drawing
 		if (brushType != 0) {
 
-			if (g_shape != POLYGON) {
+			if (g_shape != POLYGON && g_shape != STAMP) {
 
 				currentShape->SetStartX(static_cast<int>(LOWORD(_lparam)));
 				currentShape->SetStartY(static_cast<int>(HIWORD(_lparam)));
@@ -575,12 +608,17 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 				bIsDrawing = true;
 
 			}
-			else {
+			else if (g_shape == POLYGON) {
 
 				tempStartPoint.x = static_cast<int>(LOWORD(_lparam));
 				tempStartPoint.y = static_cast<int>(HIWORD(_lparam));
 				tempPolygon->AddPoint(tempStartPoint);
 				bIsDrawing = true;
+
+			}
+			else {
+
+				//bIsDrawing = true;
 
 			}
 
@@ -610,6 +648,17 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 	case WM_LBUTTONUP:
 	{
 
+		if (g_shape == STAMP) {
+
+			startX = static_cast<int>(LOWORD(_lparam));
+			startY = static_cast<int>(HIWORD(_lparam));
+
+			tempStamp = new CStamp(tempBitmap, startX, startY);
+			g_canvas->AddShape(tempStamp);
+			InvalidateRect(_hwnd, NULL, false);
+
+		}
+
 		if (bIsDrawing == true) {
 
 			if (g_shape != POLYGON) {
@@ -627,9 +676,11 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 					bIsDrawing = false;
 
 				}
+
 			}
 
 			InvalidateRect(_hwnd, NULL, false);
+
 		}
 
 		return (0);
@@ -724,6 +775,17 @@ void CreateButtons(HWND _hwnd) {
 	SendMessage(button_penColor, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
 	//// BRUSHES ////
+	// ----------------------------- Pen
+	/*brush_pen = CreateWindow(
+		L"BUTTON", L"",
+		WS_CHILD | WS_VISIBLE | BS_ICON,
+		132, 0, 44, 44,
+		_hwnd,
+		(HMENU)IDI_ICON_PEN, GetModuleHandle(NULL), NULL
+	);
+	hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_PEN));
+	SendMessage(brush_pen, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);*/
+
 	// ----------------------------- Line
 	brush_line = CreateWindow(
 		L"BUTTON", L"",
@@ -768,6 +830,17 @@ void CreateButtons(HWND _hwnd) {
 	hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_POLYGON));
 	SendMessage(brush_polygon, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
 
+	// ----------------------------- Polygon
+	brush_stamp = CreateWindow(
+		L"BUTTON", L"",
+		WS_CHILD | WS_VISIBLE | BS_ICON,
+		352, 0, 44, 44,
+		_hwnd,
+		(HMENU)IDI_ICON_STAMP, GetModuleHandle(NULL), NULL
+	);
+	hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_STAMP));
+	SendMessage(brush_stamp, BM_SETIMAGE, (WPARAM)IMAGE_ICON, (LPARAM)hIcon);
+
 	//// Width trackbar ////
 	HWND hLeftLabel = CreateWindowW(L"Static", L"1",
 		WS_CHILD | WS_VISIBLE, 0, 0, 10, 15, _hwnd, (HMENU)1, NULL, NULL);
@@ -807,14 +880,17 @@ void RegisterPanel(HWND _hwnd) {
 
 	if (tempBitmap == NULL) {
 
+		int sizeX = GetSystemMetrics(SM_CXSCREEN);
+		int sizeY = GetSystemMetrics(SM_CYSCREEN);
+
 		hwndPanel = CreateWindow(WINDOW_CLASS_PANEL, NULL,
 			WS_CHILD | WS_VISIBLE,
 			0, 44,
-			GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+			sizeX, sizeY,
 			_hwnd, (HMENU)1, g_hInstance, NULL);
 
 		g_canvas = new CCanvas();
-		g_canvas->Initialize(hwndPanel, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+		g_canvas->Initialize(hwndPanel, sizeX, sizeY);
 
 	}
 	else {
@@ -825,11 +901,17 @@ void RegisterPanel(HWND _hwnd) {
 		hwndPanel = CreateWindow(WINDOW_CLASS_PANEL, NULL,
 			WS_CHILD | WS_VISIBLE,
 			0, 44,
-			bitmap.bmWidth, bitmap.bmHeight,
+			bitmap.bmWidth + 1, bitmap.bmHeight + 2,
 			_hwnd, (HMENU)1, g_hInstance, NULL);
 
 		g_canvas = new CCanvas();
-		g_canvas->Initialize(hwndPanel, bitmap.bmWidth, bitmap.bmHeight);
+		g_canvas->Initialize(hwndPanel, bitmap.bmWidth + 1, bitmap.bmHeight + 2);
+
+		InvalidateRect(_hwnd, NULL, true);
+
+		tempStamp = new CStamp(tempBitmap, 0, 1);
+
+		g_canvas->AddShape(tempStamp);
 
 		tempBitmap = NULL;
 
@@ -840,8 +922,8 @@ void RegisterPanel(HWND _hwnd) {
 	RegisterHotKey(_hwnd, 2, MOD_CONTROL | MOD_NOREPEAT, 'O'); // CTRL + N
 	RegisterHotKey(_hwnd, 3, MOD_CONTROL | MOD_NOREPEAT, 'S'); // CTRL + S
 	RegisterHotKey(_hwnd, 4, MOD_CONTROL | MOD_NOREPEAT, 'Q'); // CTRL + Q
-	RegisterHotKey(_hwnd, 5, MOD_CONTROL | MOD_NOREPEAT, 'Z'); // CTRL + Z
-	RegisterHotKey(_hwnd, 6, MOD_CONTROL | MOD_NOREPEAT, 'Y'); // CTRL + Y
+	RegisterHotKey(_hwnd, 5, MOD_CONTROL, 'Z'); // CTRL + Z
+	RegisterHotKey(_hwnd, 6, MOD_CONTROL, 'Y'); // CTRL + Y
 
 }
 
@@ -868,7 +950,7 @@ COLORREF ShowColorDialog(HWND hwnd) {
 
 }
 
-HBITMAP* OpenBitmapImage(HWND _hwnd) {
+HBITMAP OpenBitmapImage(HWND _hwnd) {
 
 	OPENFILENAME ofn;
 	wchar_t szFileName[MAX_PATH] = L"";
@@ -877,18 +959,20 @@ HBITMAP* OpenBitmapImage(HWND _hwnd) {
 
 	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
 	ofn.hwndOwner = _hwnd;
-	ofn.lpstrFilter = L"PNG Files (*.png)\0*.png\0JPEG Files (*.jpeg)\0*.jpeg\0Bitmap Files (*.bmp)\0*.bmp\0";
+	ofn.lpstrFilter = L"Bitmap Files (*.bmp)\0*.bmp\0";
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = L"png";
+	ofn.lpstrDefExt = L"bmp";
 
 	// Do something usefull with the filename stored in szFileName 
 	if (GetOpenFileName(&ofn)) {
 
 		HBITMAP bmp;
-		bmp = (HBITMAP)LoadBitmap(g_hInstance, szFileName);
-		return &bmp;
+		bmp = (HBITMAP)LoadImage(g_hInstance, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		BITMAP bitmap;
+		GetObject(bmp, sizeof(BITMAP), &bitmap);
+		return bmp;
 
 	}
 

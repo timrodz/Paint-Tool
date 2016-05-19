@@ -63,7 +63,7 @@ void CBackBuffer::Present() {
 
 	HDC hWindowDC = ::GetDC(m_hwnd);
 
-	
+
 
 	BitBlt(hWindowDC, 0, 0, GetWidth(), GetHeight(), GetBFDC(), 0, 0, SRCCOPY);
 

@@ -8,12 +8,11 @@ class CStamp : public IShape {
 
 public:
 	CStamp();
-	CStamp(HINSTANCE _hInstance, wchar_t* _filename);
-	CStamp(HINSTANCE _hInstance, wchar_t* _filename, int _x, int _);
+	CStamp(HBITMAP _bitmap, int _x, int _y);
 	virtual ~CStamp();
-	
+
 	virtual void Draw(HDC _hdc);
-	
+
 	void SetStartX(int _iX);
 	void SetStartY(int _iY);
 

@@ -9,6 +9,7 @@ using namespace Gdiplus;
 
 CCanvas::CCanvas() {
 
+
 	m_pBackBuffer = nullptr;
 
 }
@@ -55,11 +56,7 @@ bool CCanvas::Draw(HDC _hdc) {
 
 	}
 
-	// Drawing the stamps
-	static std::vector<CStamp*>::const_iterator stamps;
-	for (stamps = m_vecStamps.begin(); stamps != m_vecStamps.end(); stamps++) {
-		(*stamps)->Draw(m_pBackBuffer->GetBFDC());
-	}
+
 
 	m_pBackBuffer->Present();
 
@@ -148,12 +145,6 @@ void CCanvas::Load(HWND _hwnd) {
 void CCanvas::AddShape(IShape* _s) {
 
 	m_shapes.push_back(_s);
-
-}
-
-void CCanvas::AddStamp(CStamp* _s) {
-
-	m_vecStamps.push_back(_s);
 
 }
 

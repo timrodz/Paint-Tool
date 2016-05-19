@@ -10,7 +10,9 @@ enum EShape {
 	LINE,
 	RECTANGLE,
 	ELLIPSE,
-	POLYGON
+	POLYGON,
+	STAMP,
+	PEN
 };
 
 class IShape; //Forward Declaration
@@ -31,7 +33,6 @@ public:
 	void Save(HWND _hwnd);
 	void Load(HWND _hwnd);
 	void AddShape(IShape* _s);
-	void AddStamp(CStamp* _s);
 	void Undo();
 	void Redo();
 	int GetEncoderCLSID(const WCHAR* format, CLSID* pClsid);

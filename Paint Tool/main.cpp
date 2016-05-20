@@ -45,7 +45,7 @@ HWND button_fillColor;
 HWND button_penColor;
 
 // Brushes //
-HWND brush_pen;
+//HWND brush_pen;
 HWND brush_line;
 HWND brush_rect;
 HWND brush_ellipse;
@@ -214,11 +214,11 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 
 			//// File Menu ////
 		case IDM_FILE_NEW:
+			tempBitmap = NULL;
 			RegisterPanel(_hwnd);
 			break;
 		case IDM_FILE_OPEN:
 			tempBitmap = OpenBitmapImage(_hwnd);
-			//g_shape = STAMP;
 			RegisterPanel(_hwnd);
 			break;
 		case IDM_FILE_SAVE:
@@ -232,7 +232,10 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			MessageBoxA(_hwnd, "Paint Tool v1\nUniversity: Media Design School\nAuthor: Juan Rodriguez\nContact: trodz24@gmail.com\n", "About", MB_OK);
 			break;
 		case IDM_HELP_CONTROLS:
-			MessageBoxA(_hwnd, "Undo\tCTRL+Z\nRedo\tCTRL+Y\n", "Controls", MB_OK);
+			MessageBoxA(_hwnd,
+				"POLYGONS\nTo create a polygon, click and hold the LEFT mouse button while you click the RIGHT mouse button to add a point. Once satisfied, release the LEFT mouse to successfully add the shape to your canvas.\n\n"
+				"STAMPS\nTo add a stamp, click the stamp button, load a .bmp file and clik the RIGHT mouse button on the canvas to add it.\n\n"
+				"Undo\tCTRL + Z\nRedo\tCTRL + Y\n", "Controls", MB_OK);
 			break;
 			//// Pen styles ////
 			{
@@ -287,7 +290,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		}
 		break;
 			}
-
 
 			//// Brush styles ////
 			{
@@ -394,19 +396,9 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDI_ICON_PENCOLOR:
 			g_penColor = ShowColorDialog(_hwnd);
 			break;
-		/*case IDI_ICON_PEN:
-			g_shape = PEN;
-			Button_SetState(brush_pen, 8);
-			Button_SetState(brush_line, 0);
-			Button_SetState(brush_rect, 0);
-			Button_SetState(brush_ellipse, 0);
-			Button_SetState(brush_polygon, 0);
-			Button_SetState(brush_stamp, 0);
-			break;*/
 			// Line
 		case IDI_ICON_BRUSH:
 			g_shape = LINE;
-			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 8);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 0);
@@ -416,7 +408,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			// Rectangle
 		case IDI_ICON_RECTANGLE:
 			g_shape = RECTANGLE;
-			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 8);
 			Button_SetState(brush_ellipse, 0);
@@ -426,7 +417,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			// Ellipse
 		case IDI_ICON_ELLIPSE:
 			g_shape = ELLIPSE;
-			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 8);
@@ -435,7 +425,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 			break;
 		case IDI_ICON_POLYGON:
 			g_shape = POLYGON;
-			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 0);
@@ -445,7 +434,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		case IDI_ICON_STAMP:
 			tempBitmap = OpenBitmapImage(_hwnd);
 			g_shape = STAMP;
-			Button_SetState(brush_pen, 0);
 			Button_SetState(brush_line, 0);
 			Button_SetState(brush_rect, 0);
 			Button_SetState(brush_ellipse, 0);
@@ -475,20 +463,28 @@ LRESULT CALLBACK WindowProc(HWND _hwnd,
 		{
 			// CTRL + N
 		case 1:
-			RegisterPanel(_hwnd);
+			if (MessageBoxA(_hwnd, "Do you wish to create a new canvas from scratch?", "Confirm", MB_OKCANCEL | MB_ICONEXCLAMATION) == 1) // Ok = 1
+				RegisterPanel(_hwnd);
 			break;
 			// CTRL + O
 		case 2:
 			//OpenBitmapImage(_hwnd);
-			g_canvas->Load(_hwnd);
+			if (MessageBoxA(_hwnd, "Do you wish to open a new image and set it as your current canvas?", "Confirm", MB_OKCANCEL | MB_ICONEXCLAMATION) == 1) { // Ok = 1
+
+				tempBitmap = OpenBitmapImage(_hwnd);
+				RegisterPanel(_hwnd);
+
+			}
 			break;
 			// CTRL + S
 		case 3:
+			if (MessageBoxA(_hwnd, "Do you wish to save your canvas?", "Confirm", MB_OKCANCEL | MB_ICONEXCLAMATION) == 1) // Ok = 1
 			g_canvas->Save(hwndPanel);
 			break;
 			// CTRL + Q
 		case 4:
-			PostQuitMessage(0);
+			if (MessageBoxA(_hwnd, "Do you wish to exit?", "Confirm", MB_OKCANCEL | MB_ICONEXCLAMATION) == 1) // Ok = 1
+				PostQuitMessage(0);
 			break;
 			// CTRL + Z
 		case 5:
@@ -570,7 +566,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 
 		case PEN:
 			//currentShape = new CLine(g_penStyle, g_penWidth, g_penColor);
-			brushType = Button_GetState(brush_pen);
+			//brushType = Button_GetState(brush_pen);
 			break;
 		case LINE:
 			currentShape = new CLine(g_penStyle, g_penWidth, g_penColor);
@@ -616,11 +612,6 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 				bIsDrawing = true;
 
 			}
-			else {
-
-				//bIsDrawing = true;
-
-			}
 
 		}
 
@@ -648,16 +639,7 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 	case WM_LBUTTONUP:
 	{
 
-		if (g_shape == STAMP) {
 
-			startX = static_cast<int>(LOWORD(_lparam));
-			startY = static_cast<int>(HIWORD(_lparam));
-
-			tempStamp = new CStamp(tempBitmap, startX, startY);
-			g_canvas->AddShape(tempStamp);
-			InvalidateRect(_hwnd, NULL, false);
-
-		}
 
 		if (bIsDrawing == true) {
 
@@ -696,6 +678,17 @@ LRESULT CALLBACK PanelProc(HWND _hwnd,
 			tempEndPoint.x = static_cast<int>(LOWORD(_lparam));
 			tempEndPoint.y = static_cast<int>(HIWORD(_lparam));
 			tempPolygon->AddPoint(tempEndPoint);
+
+		}
+
+		if (g_shape == STAMP) {
+
+			startX = static_cast<int>(LOWORD(_lparam));
+			startY = static_cast<int>(HIWORD(_lparam));
+
+			tempStamp = new CStamp(tempBitmap, startX, startY);
+			g_canvas->AddShape(tempStamp);
+			InvalidateRect(_hwnd, NULL, false);
 
 		}
 
@@ -952,7 +945,9 @@ COLORREF ShowColorDialog(HWND hwnd) {
 
 HBITMAP OpenBitmapImage(HWND _hwnd) {
 
-	OPENFILENAME ofn;
+	//if (g_shape == STAMP && tempBitmap == NULL) {
+
+OPENFILENAME ofn;
 	wchar_t szFileName[MAX_PATH] = L"";
 
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -977,6 +972,9 @@ HBITMAP OpenBitmapImage(HWND _hwnd) {
 	}
 
 	return NULL;
+	//}
+
+	
 
 }
 

@@ -12,7 +12,7 @@ enum EShape {
 	ELLIPSE,
 	POLYGON,
 	STAMP,
-	PEN
+	NONE
 };
 
 class IShape; //Forward Declaration
@@ -31,7 +31,6 @@ public:
 	bool Initialize(HWND _hwnd, int _iWidth, int _iHeight);
 	bool Draw(HDC _hdc);
 	void Save(HWND _hwnd);
-	void Load(HWND _hwnd);
 	void AddShape(IShape* _s);
 	void Undo();
 	void Redo();

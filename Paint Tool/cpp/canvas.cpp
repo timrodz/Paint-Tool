@@ -105,43 +105,6 @@ void CCanvas::Save(HWND _hwnd) {
 
 }
 
-void CCanvas::Load(HWND _hwnd) {
-
-	OPENFILENAME ofn;
-	wchar_t szFileName[MAX_PATH] = L"";
-
-	ZeroMemory(&ofn, sizeof(ofn));
-
-	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
-	ofn.hwndOwner = _hwnd;
-	ofn.lpstrFilter = L"PNG Files (*.png)\0*.png\0JPEG Files (*.jpeg)\0*.jpeg\0Bitmap Files (*.bmp)\0*.bmp\0";
-	ofn.lpstrFile = szFileName;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = L"png";
-
-	// Do something usefull with the filename stored in szFileName 
-	if (GetOpenFileName(&ofn)) {
-
-		Bitmap* image = Bitmap::FromFile(szFileName, false);
-
-		if (image != nullptr) {
-
-			HBITMAP result = NULL;
-
-			image->GetHBITMAP(Color(255, 255, 255), &result);
-
-			m_pBackBuffer->SetBFBitmap(result);
-
-			delete image;
-			image = 0;
-
-		}
-
-	}
-
-}
-
 void CCanvas::AddShape(IShape* _s) {
 
 	m_shapes.push_back(_s);
